@@ -35,8 +35,13 @@ def get_data(word: str) -> dict:
     if not get_response(url):
         return {}
     soup = BeautifulSoup(get_response(url).text, 'lxml')
-    print(soup.find('img', class_='i-amphtml-fill-content i-amphtml-replaced-content'))
-    result_dict = {}
+    definition = soup.find('div', class_='def ddef_d db')
+    definition = definition.text.strip()[:-1]
+    print(definition)
+    result_dict = {
+        'definition': definition,
+
+    }
     return result_dict
 
 
