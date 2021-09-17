@@ -1,1 +1,1 @@
-
+Telegram Bot-Parser that can be used as english dictionary. It looks for a given to Bot english word in https://dictionary.cambridge.org/ and parses definition, pronunciation(the UK, the US), max 3 examples and an image(optionally) if dictionary consists that word. 
