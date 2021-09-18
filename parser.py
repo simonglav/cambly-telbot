@@ -4,10 +4,32 @@ from bs4 import BeautifulSoup
 
 
 class Parser:
+    # Cambridge English Dictionary URL
+    CED_URL = 'https://dictionary.cambridge.org/dictionary/english/'
+
+    # Decrease the range of BS4 search via chunking the page to smaller blocks
+    # Common block to all needed data
+    PRIME_DIV_CLASS = 'entry-body'
+
+    # Image and word definition block
+    IMG_DEF_DIV_CLASS = 'hflxrev hdf-xs hdb-s hdf-l'
+    AMP_IMG_CLASS = 'dimg_i'
+    DEF_DIV_CLASS = 'def ddef_d db'
+
+    # Name, morphology and pronunciations block
+    NAME_MORPH_PRONOUN_DIV_CLASS = 'pos-header dpos-h'
+    NAME_SPAN_CLASS = 'hw dhw'
+    MORPH_SPAN_CLASS = 'pos dpos'
+    PRONOUN_SPAN_CLASS = 'daud'
+
+
+    # Examples block
+    EXAMPLES_DIV_CLASS = 'daccord'
+
     def __init__(self, word: str):
         self._word = Parser.adjust_word(word)
-        # CED URL + validated word
-        self._url = 'https://dictionary.cambridge.org/dictionary/english/' + self._word
+        self._url = Parser.CED_URL + self._word
+        self._prime_block = ''
         self._description_dictionary = {}
 
     @staticmethod
@@ -38,38 +60,73 @@ class Parser:
         else:
             return False
 
-    def get_description(self):
-
+    def get_description(self) -> dict:
+        """
+        Returns a word description in dictionary format with keys:
+        'name', 'image', 'definition', 'morphology', 'pronunciations'{'UK':,'US':}, 'examples'[]
+        """
         page = self._get_page()
         # If something goes wrong with request or the word doesn't exist in CED
         if not page:
             return {}
 
         page_soup = BeautifulSoup(page, 'lxml')
-        prime_block = page_soup.find('div', class_='entry-body')
-        if not prime_block:
+        self._prime_block = page_soup.find('div', class_=Parser.PRIME_DIV_CLASS)
+        if not self._prime_block:
             return {}
-        # Decrease the range of BS4 search via chunking the page to smaller blocks
-        img_def_block = prime_block.find('div', class_='hflxrev hdf-xs hdb-s hdf-l')
-        morphology_pronunciation_block = prime_block.find('div', class_='pos-header dpos-h')
-        examples_block = prime_block.find('div', class_='daccord')
+        self._get_img_def()
+        self._get_name_morph_pronoun()
+        examples_block = self._prime_block.find('div', class_=Parser.EXAMPLES_DIV_CLASS)
 
+        return self._description_dictionary
+
+    def _get_img_def(self):
+        """
+        Parses 'src' of the image and the definition text and then adds them to self._description_dictionary 
+        """
+        img_def_block = self._prime_block.find('div', class_=Parser.IMG_DEF_DIV_CLASS)
         image = None
         definition = None
         # If block is still available and class name wasn't changed
         if img_def_block:
             # Only 'src' of the image is needed
-            image = img_def_block.find('amp-img', class_='dimg_i').get("src")
-            definition = img_def_block.find('div', class_='def ddef_d db')
+            image = img_def_block.find('amp-img', class_=Parser.AMP_IMG_CLASS).get("src")
+            definition = img_def_block.find('div', class_=Parser.DEF_DIV_CLASS)
             # There's no need in extra spaces and colons at the end
             definition = definition.text.strip()[:-1]
-
-        self._description_dictionary = {
-            'definition': definition,
-            'image': image,
-        }
-        return self._description_dictionary
+        if image:
+            self._description_dictionary['image'] = image
+        if definition:
+            self._description_dictionary['definition'] = definition
+        
+    def _get_name_morph_pronoun(self):
+        """
+        Parses name text, moprhology text and 'src' of pronunciations(UK, US).
+        Then adds them to self._description_dictionary
+        """
+        name_morph_pronoun_block = self._prime_block.find('div', class_=Parser.NAME_MORPH_PRONOUN_DIV_CLASS)
+        name = None
+        morphology = None
+        pronunciations = {}
+        # If block is still available and class name wasn't changed
+        if name_morph_pronoun_block:
+            name = name_morph_pronoun_block.find('span', class_=Parser.NAME_SPAN_CLASS).text
+            morphology = name_morph_pronoun_block.find('span', class_=Parser.MORPH_SPAN_CLASS).text
+            # CED provides two ways of pronunciation(UK and US)
+            pronunciations_raw = name_morph_pronoun_block.findAll('span', class_=Parser.PRONOUN_SPAN_CLASS)
+            # Only 'src' of pronunciations are needed
+            pronunciations['UK'] = pronunciations_raw[0].find('source').get('src')
+            pronunciations['US'] = pronunciations_raw[1].find('source').get('src')
+        if name:
+            self._description_dictionary['name'] = name
+        if morphology:
+            self._description_dictionary['morphology'] = morphology
+        if pronunciations:
+            self._description_dictionary['pronunciations'] = pronunciations
 
 
 if __name__ == '__main__':
-    print(Parser('apple').get_description())
+    result = Parser('apple').get_description()
+    for key in result:
+        print(key, ':', result[key])
+
