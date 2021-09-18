@@ -25,6 +25,7 @@ class Parser:
 
     # Examples block
     EXAMPLES_DIV_CLASS = 'daccord'
+    EXAMPLES_LI_CLASS = 'eg dexamp hax'
 
     def __init__(self, word: str):
         self._word = Parser.adjust_word(word)
@@ -76,7 +77,7 @@ class Parser:
             return {}
         self._get_img_def()
         self._get_name_morph_pronoun()
-        examples_block = self._prime_block.find('div', class_=Parser.EXAMPLES_DIV_CLASS)
+        self._get_examples()
 
         return self._description_dictionary
 
@@ -101,7 +102,7 @@ class Parser:
         
     def _get_name_morph_pronoun(self):
         """
-        Parses name text, moprhology text and 'src' of pronunciations(UK, US).
+        Parses name text, morphology text and 'src' of pronunciations(UK, US).
         Then adds them to self._description_dictionary
         """
         name_morph_pronoun_block = self._prime_block.find('div', class_=Parser.NAME_MORPH_PRONOUN_DIV_CLASS)
@@ -123,6 +124,18 @@ class Parser:
             self._description_dictionary['morphology'] = morphology
         if pronunciations:
             self._description_dictionary['pronunciations'] = pronunciations
+
+    def _get_examples(self):
+        """
+        Parses examples text and then adds them to self._description_dictionary
+        """
+        # Max two first examples are needed
+        examples = self._prime_block.findAll('li', class_=Parser.EXAMPLES_LI_CLASS, limit=2)
+        # If block is still available and class name wasn't changed
+        if examples:
+            # Get only text from HTML code
+            examples = [ex.text for ex in examples]
+            self._description_dictionary['examples'] = examples
 
 
 if __name__ == '__main__':
