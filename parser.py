@@ -24,7 +24,6 @@ class Parser:
 
 
     # Examples block
-    EXAMPLES_DIV_CLASS = 'daccord'
     EXAMPLES_LI_CLASS = 'eg dexamp hax'
 
     def __init__(self, word: str):
