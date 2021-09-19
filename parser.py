@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 class Parser:
     # Cambridge English Dictionary URL
     CED_URL = 'https://dictionary.cambridge.org/dictionary/english/'
+    CED_HOSTNAME = 'https://dictionary.cambridge.org'
 
     # Decrease the range of BS4 search by getting the common block to all needed data
     PRIME_DIV_CLASS = 'entry-body'
@@ -88,7 +89,7 @@ class Parser:
         # If blocks is still available and class name wasn't changed
         if image:
             # Only 'src' of the image is needed
-            self._description_dictionary['image'] = image.get('src')
+            self._description_dictionary['image'] = self.CED_HOSTNAME + image.get('src')
         if definition:
             # There's no need in extra spaces and colons at the end
             definition = definition.text.strip()[:-1]
@@ -112,24 +113,35 @@ class Parser:
         if morphology:
             self._description_dictionary['morphology'] = morphology.text
         if pronunciations_raw:
+            # If two spellings available
             if len(pronunciations_raw) > 1:
                 # Only 'src' of pronunciations are needed
-                first_pronunciation = pronunciations_raw[0].find('source').get('src')
-                second_pronunciation = pronunciations_raw[1].find('source').get('src')
-                # To identify relevant accent
-                if 'uk_pron' in first_pronunciation:
-                    pronunciations['UK'] = first_pronunciation
-                    pronunciations['US'] = second_pronunciation
-                else:
-                    pronunciations['US'] = first_pronunciation
-                    pronunciations['UK'] = second_pronunciation
+                first_pronunciation = pronunciations_raw[0].findAll('source')
+                second_pronunciation = pronunciations_raw[1].findAll('source')
+
+                # If search was success
+                if first_pronunciation and second_pronunciation:
+                    first_pronunciation = self.CED_HOSTNAME + first_pronunciation[1].get('src')
+                    second_pronunciation = self.CED_HOSTNAME + second_pronunciation[1].get('src')
+
+                    # To identify relevant spelling
+                    if 'uk_pron' in first_pronunciation:
+                        pronunciations['UK'] = first_pronunciation
+                        pronunciations['US'] = second_pronunciation
+                    else:
+                        pronunciations['US'] = first_pronunciation
+                        pronunciations['UK'] = second_pronunciation
+
+            # If only one spelling
             elif len(pronunciations_raw) == 1:
-                pronunciations = pronunciations_raw[0]
+                pronunciations = self.CED_HOSTNAME + pronunciations_raw[0].find('source')
+                if pronunciations:
+                    pronunciations = pronunciations.get('src')
             self._description_dictionary['pronunciations'] = pronunciations
 
     def _get_examples(self):
         """
-        Parses examples text and then adds them to self._description_dictionary
+        Parses examples[max 2] text and then adds them to self._description_dictionary
         """
         # Max two first examples are needed
         examples = self._prime_block.findAll('li', class_=Parser.EXAMPLES_LI_CLASS, limit=2)
@@ -141,7 +153,7 @@ class Parser:
 
 
 if __name__ == '__main__':
-    result = Parser('name').get_description()
+    result = Parser('apple').get_description()
     for key in result:
         print(key, ':', result[key])
 
