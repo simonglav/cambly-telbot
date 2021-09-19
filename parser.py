@@ -7,21 +7,17 @@ class Parser:
     # Cambridge English Dictionary URL
     CED_URL = 'https://dictionary.cambridge.org/dictionary/english/'
 
-    # Decrease the range of BS4 search via chunking the page to smaller blocks
-    # Common block to all needed data
+    # Decrease the range of BS4 search by getting the common block to all needed data
     PRIME_DIV_CLASS = 'entry-body'
 
-    # Image and word definition block
-    IMG_DEF_DIV_CLASS = 'hflxrev hdf-xs hdb-s hdf-l'
+    # Image and word definition blocks
     AMP_IMG_CLASS = 'dimg_i'
     DEF_DIV_CLASS = 'def ddef_d db'
 
-    # Name, morphology and pronunciations block
-    NAME_MORPH_PRONOUN_DIV_CLASS = 'pos-header dpos-h'
+    # Name, morphology and pronunciations blocks
     NAME_SPAN_CLASS = 'hw dhw'
     MORPH_SPAN_CLASS = 'pos dpos'
     PRONOUN_SPAN_CLASS = 'daud'
-
 
     # Examples block
     EXAMPLES_LI_CLASS = 'eg dexamp hax'
@@ -84,19 +80,18 @@ class Parser:
         """
         Parses 'src' of the image and the definition text and then adds them to self._description_dictionary 
         """
-        img_def_block = self._prime_block.find('div', class_=Parser.IMG_DEF_DIV_CLASS)
         image = None
         definition = None
-        # If block is still available and class name wasn't changed
-        if img_def_block:
+        image = self._prime_block.find('amp-img', class_=Parser.AMP_IMG_CLASS)
+        # Not every word has an image and thus, def_img_block could not exist
+        definition = self._prime_block.find('div', class_=Parser.DEF_DIV_CLASS)
+        # If blocks is still available and class name wasn't changed
+        if image:
             # Only 'src' of the image is needed
-            image = img_def_block.find('amp-img', class_=Parser.AMP_IMG_CLASS).get("src")
-            definition = img_def_block.find('div', class_=Parser.DEF_DIV_CLASS)
+            self._description_dictionary['image'] = image.get('src')
+        if definition:
             # There's no need in extra spaces and colons at the end
             definition = definition.text.strip()[:-1]
-        if image:
-            self._description_dictionary['image'] = image
-        if definition:
             self._description_dictionary['definition'] = definition
         
     def _get_name_morph_pronoun(self):
@@ -104,24 +99,32 @@ class Parser:
         Parses name text, morphology text and 'src' of pronunciations(UK, US).
         Then adds them to self._description_dictionary
         """
-        name_morph_pronoun_block = self._prime_block.find('div', class_=Parser.NAME_MORPH_PRONOUN_DIV_CLASS)
         name = None
         morphology = None
         pronunciations = {}
-        # If block is still available and class name wasn't changed
-        if name_morph_pronoun_block:
-            name = name_morph_pronoun_block.find('span', class_=Parser.NAME_SPAN_CLASS).text
-            morphology = name_morph_pronoun_block.find('span', class_=Parser.MORPH_SPAN_CLASS).text
-            # CED provides two ways of pronunciation(UK and US)
-            pronunciations_raw = name_morph_pronoun_block.findAll('span', class_=Parser.PRONOUN_SPAN_CLASS)
-            # Only 'src' of pronunciations are needed
-            pronunciations['UK'] = pronunciations_raw[0].find('source').get('src')
-            pronunciations['US'] = pronunciations_raw[1].find('source').get('src')
+        name = self._prime_block.find('span', class_=Parser.NAME_SPAN_CLASS)
+        morphology = self._prime_block.find('span', class_=Parser.MORPH_SPAN_CLASS)
+        # CED provides two ways of pronunciation(UK and US)
+        pronunciations_raw = self._prime_block.findAll('span', class_=Parser.PRONOUN_SPAN_CLASS)
+        # If blocks are still available and class names weren't changed
         if name:
-            self._description_dictionary['name'] = name
+            self._description_dictionary['name'] = name.text
         if morphology:
-            self._description_dictionary['morphology'] = morphology
-        if pronunciations:
+            self._description_dictionary['morphology'] = morphology.text
+        if pronunciations_raw:
+            if len(pronunciations_raw) > 1:
+                # Only 'src' of pronunciations are needed
+                first_pronunciation = pronunciations_raw[0].find('source').get('src')
+                second_pronunciation = pronunciations_raw[1].find('source').get('src')
+                # To identify relevant accent
+                if 'uk_pron' in first_pronunciation:
+                    pronunciations['UK'] = first_pronunciation
+                    pronunciations['US'] = second_pronunciation
+                else:
+                    pronunciations['US'] = first_pronunciation
+                    pronunciations['UK'] = second_pronunciation
+            elif len(pronunciations_raw) == 1:
+                pronunciations = pronunciations_raw[0]
             self._description_dictionary['pronunciations'] = pronunciations
 
     def _get_examples(self):
@@ -138,7 +141,7 @@ class Parser:
 
 
 if __name__ == '__main__':
-    result = Parser('apple').get_description()
+    result = Parser('name').get_description()
     for key in result:
         print(key, ':', result[key])
 
