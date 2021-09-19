@@ -4,6 +4,9 @@ from bs4 import BeautifulSoup
 
 
 class Parser:
+    """
+    Class-parser. Processes Cambridge English Dictionary
+    """
     # Cambridge English Dictionary URL
     CED_URL = 'https://dictionary.cambridge.org/dictionary/english/'
     CED_HOSTNAME = 'https://dictionary.cambridge.org'
@@ -91,8 +94,8 @@ class Parser:
             # Only 'src' of the image is needed
             self._description_dictionary['image'] = self.CED_HOSTNAME + image.get('src')
         if definition:
-            # There's no need in extra spaces and colons at the end
-            definition = definition.text.strip()[:-1]
+            # There's no need in extra spaces
+            definition = definition.text.strip()
             self._description_dictionary['definition'] = definition
         
     def _get_name_morph_pronoun(self):
@@ -107,13 +110,14 @@ class Parser:
         morphology = self._prime_block.find('span', class_=Parser.MORPH_SPAN_CLASS)
         # CED provides two ways of pronunciation(UK and US)
         pronunciations_raw = self._prime_block.findAll('span', class_=Parser.PRONOUN_SPAN_CLASS)
+
         # If blocks are still available and class names weren't changed
         if name:
             self._description_dictionary['name'] = name.text
         if morphology:
             self._description_dictionary['morphology'] = morphology.text
         if pronunciations_raw:
-            # If two spellings available
+            # If two pronunciations available
             if len(pronunciations_raw) > 1:
                 # Only 'src' of pronunciations are needed
                 first_pronunciation = pronunciations_raw[0].findAll('source')
@@ -121,10 +125,11 @@ class Parser:
 
                 # If search was success
                 if first_pronunciation and second_pronunciation:
+                    # First and second pronunciations consist .mp3 at [0] and .ogg at[1]
                     first_pronunciation = self.CED_HOSTNAME + first_pronunciation[1].get('src')
                     second_pronunciation = self.CED_HOSTNAME + second_pronunciation[1].get('src')
 
-                    # To identify relevant spelling
+                    # To identify relevant pronunciation
                     if 'uk_pron' in first_pronunciation:
                         pronunciations['UK'] = first_pronunciation
                         pronunciations['US'] = second_pronunciation
@@ -132,11 +137,11 @@ class Parser:
                         pronunciations['US'] = first_pronunciation
                         pronunciations['UK'] = second_pronunciation
 
-            # If only one spelling
+            # If there's only one pronunciation
             elif len(pronunciations_raw) == 1:
-                pronunciations = self.CED_HOSTNAME + pronunciations_raw[0].find('source')
+                pronunciations = pronunciations_raw[0].find('source')
                 if pronunciations:
-                    pronunciations = pronunciations.get('src')
+                    pronunciations = self.CED_HOSTNAME + pronunciations.get('src')
             self._description_dictionary['pronunciations'] = pronunciations
 
     def _get_examples(self):
@@ -153,7 +158,7 @@ class Parser:
 
 
 if __name__ == '__main__':
-    result = Parser('apple').get_description()
+    result = Parser('Junk').get_description()
     for key in result:
         print(key, ':', result[key])
 
