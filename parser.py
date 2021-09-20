@@ -14,15 +14,16 @@ class Parser:
     # Decrease the range of BS4 search by getting the common block to all needed data
     PRIME_DIV_CLASS = 'entry-body'
 
-    # Image and word definition blocks
+    # Image block
     AMP_IMG_CLASS = 'dimg_i'
+    # Word definition block
     DEF_DIV_CLASS = 'def ddef_d db'
-
-    # Name, morphology and pronunciations blocks
+    # Name block
     NAME_SPAN_CLASS = 'hw dhw'
+    # Morphology block
     MORPH_SPAN_CLASS = 'pos dpos'
+    # Pronunciations block
     PRONOUN_SPAN_CLASS = 'daud'
-
     # Examples block
     EXAMPLES_LI_CLASS = 'eg dexamp hax'
 
@@ -75,7 +76,8 @@ class Parser:
         if not self._prime_block:
             return {}
         self._get_img_def()
-        self._get_name_morph_pronoun()
+        self._get_name_morph()
+        self._get_pronoun()
         self._get_examples()
 
         return self._description_dictionary
@@ -84,8 +86,6 @@ class Parser:
         """
         Parses 'src' of the image and the definition text and then adds them to self._description_dictionary 
         """
-        image = None
-        definition = None
         image = self._prime_block.find('amp-img', class_=Parser.AMP_IMG_CLASS)
         # Not every word has an image and thus, def_img_block could not exist
         definition = self._prime_block.find('div', class_=Parser.DEF_DIV_CLASS)
@@ -98,24 +98,27 @@ class Parser:
             definition = definition.text.strip()
             self._description_dictionary['definition'] = definition
         
-    def _get_name_morph_pronoun(self):
+    def _get_name_morph(self):
         """
-        Parses name text, morphology text and 'src' of pronunciations(UK, US).
-        Then adds them to self._description_dictionary
+        Parses name text, morphology text and then adds them to self._description_dictionary
         """
-        name = None
-        morphology = None
-        pronunciations = {}
         name = self._prime_block.find('span', class_=Parser.NAME_SPAN_CLASS)
         morphology = self._prime_block.find('span', class_=Parser.MORPH_SPAN_CLASS)
-        # CED provides two ways of pronunciation(UK and US)
-        pronunciations_raw = self._prime_block.findAll('span', class_=Parser.PRONOUN_SPAN_CLASS)
 
         # If blocks are still available and class names weren't changed
         if name:
             self._description_dictionary['name'] = name.text
         if morphology:
             self._description_dictionary['morphology'] = morphology.text
+
+    def _get_pronoun(self):
+        """
+        Parses 'src' of pronunciations(UK, US) and then adds them to self._description_dictionary
+        """
+        pronunciations = {}
+        # CED provides two ways of pronunciation(UK and US)
+        pronunciations_raw = self._prime_block.findAll('span', class_=Parser.PRONOUN_SPAN_CLASS)
+        # If blocks are still available and class names weren't changed
         if pronunciations_raw:
             # If two pronunciations available
             if len(pronunciations_raw) > 1:
