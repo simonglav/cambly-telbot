@@ -41,7 +41,7 @@ class Parser:
         word = word.strip()
         # The longest word in English consists of 45 characters(according to Wiki)
         word = word[:50]
-        # English dictionary can contain phrases
+        # CED can contain phrases
         word = word.replace(' ', '-')
         word = word.lower()
         return word
@@ -158,10 +158,3 @@ class Parser:
             # Get only text from HTML code
             examples = [ex.text for ex in examples]
             self._description_dictionary['examples'] = examples
-
-
-if __name__ == '__main__':
-    result = Parser('Junk').get_description()
-    for key in result:
-        print(key, ':', result[key])
-
