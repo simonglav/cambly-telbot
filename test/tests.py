@@ -79,9 +79,5 @@ class WordAdjustmentTest(unittest.TestCase):
         self.assertEqual(Parser.adjust_word('APPLE'), 'apple')
 
 
-def run_tests():
-    unittest.main()
-
-
 if __name__ == '__main__':
     unittest.main()
