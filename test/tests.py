@@ -16,13 +16,13 @@ class URLTest(unittest.TestCase):
             self.fail("CED can't be reached")
         self.assertEqual(response.status_code, 200, 'CED_URL is no longer relevant')
 
-    def test_CED_HOSTNAME_accessibility(self):
+    def test_CED_DOMAIN_accessibility(self):
         user_agent = {'User-agent': 'Mozilla/5.0'}
         try:
-            response = requests.get(Parser.CED_HOSTNAME, headers=user_agent)
+            response = requests.get(Parser.CED_DOMAIN, headers=user_agent)
         except requests.exceptions.RequestException:
             self.fail("CED can't be reached")
-        self.assertEqual(response.status_code, 200, 'CED_HOSTNAME is no longer relevant')
+        self.assertEqual(response.status_code, 200, 'CED_DOMAIN is no longer relevant')
 
 
 class MarkupTest(unittest.TestCase):

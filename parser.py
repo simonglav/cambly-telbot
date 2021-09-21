@@ -9,7 +9,7 @@ class Parser:
     """
     # Cambridge English Dictionary URL
     CED_URL = 'https://dictionary.cambridge.org/dictionary/english/'
-    CED_HOSTNAME = 'https://dictionary.cambridge.org'
+    CED_DOMAIN = 'https://dictionary.cambridge.org'
 
     # Decrease the range of BS4 search by getting the common block to all needed data
     PRIME_DIV_CLASS = 'entry-body'
@@ -92,7 +92,7 @@ class Parser:
         # If blocks is still available and class name wasn't changed
         if image:
             # Only 'src' of the image is needed
-            self._description_dictionary['image'] = self.CED_HOSTNAME + image.get('src')
+            self._description_dictionary['image'] = self.CED_DOMAIN + image.get('src')
         if definition:
             # There's no need in extra spaces
             definition = definition.text.strip()
@@ -129,8 +129,8 @@ class Parser:
                 # If search was success
                 if first_pronunciation and second_pronunciation:
                     # First and second pronunciations consist .mp3 at [0] and .ogg at[1]
-                    first_pronunciation = self.CED_HOSTNAME + first_pronunciation[1].get('src')
-                    second_pronunciation = self.CED_HOSTNAME + second_pronunciation[1].get('src')
+                    first_pronunciation = self.CED_DOMAIN + first_pronunciation[1].get('src')
+                    second_pronunciation = self.CED_DOMAIN + second_pronunciation[1].get('src')
 
                     # To identify relevant pronunciation
                     if 'uk_pron' in first_pronunciation:
@@ -144,7 +144,7 @@ class Parser:
             elif len(pronunciations_raw) == 1:
                 pronunciations = pronunciations_raw[0].find('source')
                 if pronunciations:
-                    pronunciations = self.CED_HOSTNAME + pronunciations.get('src')
+                    pronunciations = self.CED_DOMAIN + pronunciations.get('src')
             self._description_dictionary['pronunciations'] = pronunciations
 
     def _get_examples(self):
