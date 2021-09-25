@@ -1,6 +1,6 @@
 # Telegram Bot Parser
 
-Telegram Bot-Parser that can be used as an english dictionary. It looks for a given to the Bot english word in [Cambridge English Dictionary](https://dictionary.cambridge.org/) and parses morphology, definition, pronunciation(the UK, the US), a few examples and an image if the dictionary consists that word, of course.
+Telegram Bot-Parser that can be used as an english dictionary. It looks for a given to the Bot english word in [Cambridge English Dictionary](https://dictionary.cambridge.org/) and parses morphology, definition, pronunciations(British and American), a few examples and an image, if the dictionary consists that word, of course.
 
 ## Stack
 
